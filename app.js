@@ -29,6 +29,7 @@ const termPlan = [
 
 const gradeOptions = [["", "Not graded"], ["4", "A · 4.0"], ["3", "B · 3.0"], ["2", "C · 2.0"], ["1", "D · 1.0"], ["0", "F · 0.0"], ["x", "Exempt"]];
 const passFailOptions = [["", "Not completed"], ["pass", "Satisfactory"], ["fail", "Unsatisfactory"]];
+const examModules = new Set(["IT43001FP", "GD43001FP", "GD43002FP", "GD43003FP", "GD43004FP"]);
 const STORAGE_KEY = "hf2ig-term-gpa-v2";
 function readSavedState() {
   const cookie = document.cookie.split("; ").find((item) => item.startsWith(`${STORAGE_KEY}=`));
@@ -61,6 +62,7 @@ function displayModule(module) {
     code: type === "track" ? `${trackName}${rawCode.slice(-1)}` : rawCode,
     storageCode: rawCode,
     credits,
+    hasExam: examModules.has(rawCode),
     passFail: type === "track" && state.pathway === "lfs"
   };
 }
@@ -94,7 +96,7 @@ function renderModules(filter = "") {
       row.className = "module-row";
       row.innerHTML = `
         <span class="module-number">${index + 1}</span>
-        <span class="module-name">${module.name}${module.passFail ? '<small class="pf-badge">Satisfactory / Unsatisfactory · Not in GPA</small>' : ""}</span>
+        <span class="module-name">${module.name}${module.hasExam ? '<small class="exam-badge">Exam</small>' : ""}${module.passFail ? '<small class="pf-badge">Satisfactory / Unsatisfactory · Not in GPA</small>' : ""}</span>
         <span class="module-credit"><b>${module.credits}</b> credit${module.credits === 1 ? "" : "s"}</span>
         <select class="grade-select ${module.passFail ? "pass-fail" : ""}" data-code="${module.storageCode}" aria-label="Result for ${module.name}">${options}</select>`;
       list.appendChild(row);
