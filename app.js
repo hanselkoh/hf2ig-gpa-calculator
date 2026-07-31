@@ -195,8 +195,14 @@ function updateValidation() {
 
   if (current.gpa === null) {
     checks.push(["warning", "!", "No GPA yet", "Enter at least one A–F result before a GPA can be calculated."]);
+    checks.push(["info", "i", "Poly eligibility pending", "A cumulative GPA of 2.50 is used as the Poly eligibility threshold in this calculator."]);
   } else {
     checks.push(["success", "✓", "Calculation is valid", `Your ${current.gpa.toFixed(2)} GPA uses ${current.credits} graded credits.`]);
+    if (current.gpa >= 2.5) {
+      checks.push(["success", "✓", "Poly GPA threshold met", `Your ${current.gpa.toFixed(2)} GPA meets the 2.50 threshold. Other admission requirements may still apply.`]);
+    } else {
+      checks.push(["warning", "!", "Poly GPA threshold not yet met", `Your GPA is ${(2.5 - current.gpa).toFixed(2)} below the 2.50 threshold. Other admission requirements may also apply.`]);
+    }
   }
 
   if (Number.isFinite(target) && target >= 0 && target <= 4 && remainingCredits > 0) {
