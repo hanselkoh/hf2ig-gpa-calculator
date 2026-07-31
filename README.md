@@ -17,7 +17,6 @@ A term-by-term, credit-weighted GPA calculator for the Higher Nitec in Immersive
 - Poly GPA eligibility indicator using a 2.50 threshold
 - Sports & Wellness excluded
 - Instant credit-weighted GPA calculation
-- Searchable module list
 - Support for ungraded and exempt modules
 - Pathway, results, and latest calculations saved in a first-party browser cookie
 - Browser storage fallback for environments where cookies are restricted

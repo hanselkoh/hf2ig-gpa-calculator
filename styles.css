@@ -118,7 +118,7 @@ button, select, input, label { touch-action: manipulation; }
 h1, h2 { font-family: "Manrope", sans-serif; }
 h1 {
   margin: 0;
-  font-size: clamp(3.2rem, 7.2vw, 6.8rem);
+  font-size: clamp(2.8rem, 5.5vw, 5rem);
   line-height: .96;
   letter-spacing: -.065em;
 }
@@ -537,7 +537,7 @@ footer {
   .brand-mark { width: 32px; height: 32px; }
   .ghost-button { min-height: 44px; padding: 8px 13px; font-size: .75rem; }
   .hero { min-height: 0; padding: 52px 22px; border-radius: 24px; }
-  h1 { font-size: clamp(3.1rem, 17vw, 5rem); }
+  h1 { font-size: clamp(2.7rem, 13vw, 4rem); }
   .hero-description { margin: 22px 0 28px; font-size: .98rem; }
   .hero-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .hero-meta strong { font-size: 1.12rem; }
@@ -587,7 +587,7 @@ footer {
   .site-header, main, footer { width: min(100% - 16px, 1180px); }
   .brand span:last-child { display: none; }
   .hero { padding: 42px 17px; }
-  h1 { font-size: 3.15rem; }
+  h1 { font-size: 2.8rem; }
   .score-card { padding: 23px 18px; }
   .pathway-panel { padding: 25px 16px; }
   .tool-card { padding-inline: 17px; }

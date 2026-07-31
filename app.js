@@ -53,7 +53,6 @@ const completedCredits = document.querySelector("#completedCredits");
 const remainingModules = document.querySelector("#remainingModules");
 const progressFill = document.querySelector("#progressFill");
 const scoreMessage = document.querySelector("#scoreMessage");
-const searchInput = document.querySelector("#moduleSearch");
 const emptyState = document.querySelector("#emptyState");
 const toast = document.querySelector("#toast");
 const pathwayDescription = document.querySelector("#pathwayDescription");
@@ -287,20 +286,12 @@ document.querySelectorAll('input[name="pathway"]').forEach((radio) => {
     state.pathway = event.target.value;
     ["TRACK1", "TRACK2", "TRACK3"].forEach((code) => delete state.results[code]);
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
-    save(); renderModules(searchInput.value); updateScore(); showToast("Pathway updated");
+    save(); renderModules(); updateScore(); showToast("Pathway updated");
   });
 });
 
-searchInput.addEventListener("input", (event) => renderModules(event.target.value));
 document.querySelector("#resetButton").addEventListener("click", () => {
-  state.results = {}; save(); renderModules(searchInput.value); updateScore(); showToast("All results reset");
-});
-document.querySelector("#copyButton").addEventListener("click", async () => {
-  const result = calculate();
-  const route = state.pathway === "ppd" ? "O/N Level or DPP" : "Progression";
-  const summary = result.gpa === null ? `HF2IG (${route}): No grades entered yet.` : `HF2IG GPA (${route}): ${result.gpa.toFixed(2)} / 4.00 (${result.credits} graded credits)`;
-  try { await navigator.clipboard.writeText(summary); showToast("GPA summary copied"); }
-  catch { showToast("Could not access clipboard"); }
+  state.results = {}; save(); renderModules(); updateScore(); showToast("All results reset");
 });
 
 targetGpaInput.addEventListener("input", () => { updateTargetPlanner(); updateValidation(); });
@@ -334,7 +325,7 @@ document.querySelector("#importBackup").addEventListener("change", async (event)
     state.results = Object.fromEntries(Object.entries(backup.results).filter(([, value]) => VALID_RESULTS.has(String(value))));
     document.querySelectorAll('input[name="pathway"]').forEach((radio) => { radio.checked = radio.value === state.pathway; });
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
-    save(); renderModules(searchInput.value); updateScore(); showToast("Backup restored");
+    save(); renderModules(); updateScore(); showToast("Backup restored");
   } catch {
     showToast("That backup file could not be restored");
   } finally {
