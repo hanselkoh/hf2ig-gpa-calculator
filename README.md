@@ -13,6 +13,7 @@ A term-by-term, credit-weighted GPA calculator for the Higher Nitec in Immersive
 - Target GPA planner based on remaining eligible credits
 - Non-destructive grade scenario comparison
 - Portable JSON backup and restore
+- Phone-optimised grade entry, navigation, touch targets, and responsive planning tools
 - Sports & Wellness excluded
 - Instant credit-weighted GPA calculation
 - Searchable module list
