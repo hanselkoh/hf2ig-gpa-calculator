@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#081b2b">
+  <meta name="description" content="Credit-weighted GPA calculator for Higher Nitec in Immersive Applications & Game.">
+  <title>HF2IG GPA Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="HF2IG GPA Calculator home">
+      <span class="brand-mark">G</span>
+      <span>HF2IG GPA</span>
+    </a>
+    <button class="ghost-button" id="resetButton" type="button">Reset grades</button>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Higher Nitec · Immersive Applications &amp; Game</p>
+        <h1>Know where your<br><span>GPA stands.</span></h1>
+        <p class="hero-description">Enter your grades and get an instant credit-weighted GPA across the full HF2IG course structure.</p>
+        <div class="hero-meta">
+          <div><strong>24</strong><span>Modules</span></div>
+          <div><strong>59</strong><span>Total credits</span></div>
+          <div><strong>2</strong><span>Years</span></div>
+        </div>
+      </div>
+
+      <aside class="score-card" aria-live="polite">
+        <div class="score-label">Your cumulative GPA</div>
+        <div class="score-value" id="gpaValue">—</div>
+        <div class="score-scale">out of 4.00</div>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="score-detail">
+          <span><b id="completedCredits">0</b> credits graded</span>
+          <span><b id="remainingModules">24</b> remaining</span>
+        </div>
+        <p class="score-message" id="scoreMessage">Choose a grade below to begin.</p>
+      </aside>
+    </section>
+
+    <section class="calculator" aria-labelledby="calculatorTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Grade planner</p>
+          <h2 id="calculatorTitle">Your modules</h2>
+        </div>
+        <div class="toolbar">
+          <label class="search-box">
+            <span class="sr-only">Search modules</span>
+            <input id="moduleSearch" type="search" placeholder="Search modules…">
+          </label>
+          <button class="share-button" id="copyButton" type="button">Copy summary</button>
+        </div>
+      </div>
+
+      <div class="legend" aria-label="Grade point scale">
+        <span>Scale</span>
+        <span>A · 4</span><span>B · 3</span><span>C · 2</span><span>D · 1</span><span>F · 0</span>
+      </div>
+
+      <div id="moduleGroups"></div>
+      <p class="empty-state" id="emptyState" hidden>No modules match your search.</p>
+    </section>
+
+    <section class="formula-card">
+      <div>
+        <p class="eyebrow">How it works</p>
+        <h2>Weighted by credits, not module count.</h2>
+      </div>
+      <div class="formula">
+        <span>GPA</span>
+        <strong>=</strong>
+        <div><span>Σ (grade point × credits)</span><hr><span>Σ graded credits</span></div>
+      </div>
+      <p>Modules marked “Not graded” are excluded, so you can calculate your GPA before completing the full course.</p>
+    </section>
+  </main>
+
+  <footer>
+    <p>Built for programme HF2IG · Effective April 2023</p>
+    <p>Grades are saved only in this browser.</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
