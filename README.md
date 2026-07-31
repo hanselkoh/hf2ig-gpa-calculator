@@ -10,6 +10,9 @@ A term-by-term, credit-weighted GPA calculator for the Higher Nitec in Immersive
 - Current and cumulative GPA shown after every term
 - Clean module names without internal module-code tags
 - Exam badges for SDP, Gamification Concept, Game Programming, Game Assets Creation, and Game Development
+- Target GPA planner based on remaining eligible credits
+- Non-destructive grade scenario comparison
+- Portable JSON backup and restore
 - Sports & Wellness excluded
 - Instant credit-weighted GPA calculation
 - Searchable module list

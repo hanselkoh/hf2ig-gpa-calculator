@@ -53,6 +53,11 @@ const searchInput = document.querySelector("#moduleSearch");
 const emptyState = document.querySelector("#emptyState");
 const toast = document.querySelector("#toast");
 const pathwayDescription = document.querySelector("#pathwayDescription");
+const targetGpaInput = document.querySelector("#targetGpa");
+const targetResult = document.querySelector("#targetResult");
+const scenarioModule = document.querySelector("#scenarioModule");
+const scenarioGrade = document.querySelector("#scenarioGrade");
+const scenarioResult = document.querySelector("#scenarioResult");
 
 function displayModule(module) {
   const [rawName, rawCode, credits, type] = module;
@@ -137,7 +142,60 @@ function calculate() {
       gradedModules += 1;
     }
   }));
-  return { gpa: credits ? points / credits : null, credits, gradedModules };
+  return { gpa: credits ? points / credits : null, points, credits, gradedModules };
+}
+
+function gradedModules() {
+  return termPlan.flatMap((term) => term.modules.map(displayModule)).filter((module) => !module.passFail);
+}
+
+function updateTargetPlanner() {
+  const target = Number(targetGpaInput.value);
+  if (!Number.isFinite(target) || target < 0 || target > 4) {
+    targetResult.textContent = "Enter a target between 0.00 and 4.00.";
+    return;
+  }
+  const current = calculate();
+  const eligibleCredits = gradedModules().reduce((sum, module) => state.results[module.storageCode] === "x" ? sum : sum + module.credits, 0);
+  const remainingCredits = Math.max(0, eligibleCredits - current.credits);
+  const pointsNeeded = (target * eligibleCredits) - current.points;
+
+  if (!remainingCredits) {
+    targetResult.innerHTML = current.gpa !== null && current.gpa >= target
+      ? `Target achieved. Final GPA: <strong>${current.gpa.toFixed(2)}</strong>`
+      : `No remaining graded credits. Current GPA: <strong>${current.gpa === null ? "—" : current.gpa.toFixed(2)}</strong>`;
+    return;
+  }
+  const requiredAverage = pointsNeeded / remainingCredits;
+  if (requiredAverage <= 0) {
+    targetResult.innerHTML = `Your target is already secured, even before the remaining <strong>${remainingCredits} credits</strong>.`;
+  } else if (requiredAverage > 4) {
+    targetResult.innerHTML = `This target is not currently reachable; it would require an average above <strong>4.00</strong>.`;
+  } else {
+    targetResult.innerHTML = `You need an average grade point of <strong>${requiredAverage.toFixed(2)}</strong> across ${remainingCredits} remaining credits.`;
+  }
+}
+
+function populateScenarioModules() {
+  const previous = scenarioModule.value;
+  scenarioModule.innerHTML = gradedModules().map((module) => `<option value="${module.storageCode}">${module.name}</option>`).join("");
+  if ([...scenarioModule.options].some((option) => option.value === previous)) scenarioModule.value = previous;
+  updateScenario();
+}
+
+function updateScenario() {
+  const module = gradedModules().find((item) => item.storageCode === scenarioModule.value);
+  if (!module) { scenarioResult.textContent = "Select a module and grade."; return; }
+  const possibleGrade = Number(scenarioGrade.value);
+  const current = calculate();
+  const currentValue = state.results[module.storageCode];
+  const hasCurrentGrade = currentValue !== undefined && currentValue !== "" && currentValue !== "x";
+  const projectedPoints = current.points - (hasCurrentGrade ? Number(currentValue) * module.credits : 0) + possibleGrade * module.credits;
+  const projectedCredits = current.credits + (hasCurrentGrade ? 0 : module.credits);
+  const projectedGpa = projectedCredits ? projectedPoints / projectedCredits : null;
+  const delta = current.gpa === null || projectedGpa === null ? null : projectedGpa - current.gpa;
+  const deltaText = delta === null ? "first projected result" : `${delta >= 0 ? "+" : ""}${delta.toFixed(2)} change`;
+  scenarioResult.innerHTML = `Projected cumulative GPA: <strong>${projectedGpa === null ? "—" : projectedGpa.toFixed(2)}</strong><br>${deltaText}`;
 }
 
 function updateTermSummaries() {
@@ -176,6 +234,8 @@ function updateScore() {
   else if (result.gpa >= 2) scoreMessage.textContent = "You’re building a steady foundation.";
   else scoreMessage.textContent = "Every graded module is a chance to lift your GPA.";
   updateTermSummaries();
+  updateTargetPlanner();
+  updateScenario();
 }
 
 function save() {
@@ -199,7 +259,7 @@ document.querySelectorAll('input[name="pathway"]').forEach((radio) => {
     state.pathway = event.target.value;
     ["TRACK1", "TRACK2", "TRACK3"].forEach((code) => delete state.results[code]);
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
-    save(); renderModules(searchInput.value); updateScore(); showToast("Pathway updated");
+    save(); renderModules(searchInput.value); populateScenarioModules(); updateScore(); showToast("Pathway updated");
   });
 });
 
@@ -215,5 +275,47 @@ document.querySelector("#copyButton").addEventListener("click", async () => {
   catch { showToast("Could not access clipboard"); }
 });
 
+targetGpaInput.addEventListener("input", updateTargetPlanner);
+scenarioModule.addEventListener("change", updateScenario);
+scenarioGrade.addEventListener("change", updateScenario);
+
+document.querySelector("#exportBackup").addEventListener("click", () => {
+  const backup = {
+    app: "HF2IG GPA Calculator",
+    version: 3,
+    pathway: state.pathway,
+    results: state.results,
+    calculation: calculate(),
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `hf2ig-gpa-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast("Backup downloaded");
+});
+
+document.querySelector("#importBackup").addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const backup = JSON.parse(await file.text());
+    if (!['ppd', 'lfs'].includes(backup.pathway) || !backup.results || typeof backup.results !== "object") throw new Error("Invalid backup");
+    const allowedResults = new Set(["0", "1", "2", "3", "4", "x", "pass", "fail"]);
+    state.pathway = backup.pathway;
+    state.results = Object.fromEntries(Object.entries(backup.results).filter(([, value]) => allowedResults.has(String(value))));
+    document.querySelectorAll('input[name="pathway"]').forEach((radio) => { radio.checked = radio.value === state.pathway; });
+    pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
+    save(); renderModules(searchInput.value); populateScenarioModules(); updateScore(); showToast("Backup restored");
+  } catch {
+    showToast("That backup file could not be restored");
+  } finally {
+    event.target.value = "";
+  }
+});
+
 pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
-renderModules(); updateScore();
+renderModules(); populateScenarioModules(); updateScore();
