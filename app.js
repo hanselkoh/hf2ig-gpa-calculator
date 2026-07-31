@@ -272,7 +272,7 @@ function save() {
     calculation: calculate(),
     savedAt: new Date().toISOString()
   });
-  document.cookie = `${STORAGE_KEY}=${encodeURIComponent(payload)}; Max-Age=31536000; Path=/hf2ig-gpa-calculator/; SameSite=Lax; Secure`;
+  document.cookie = `${STORAGE_KEY}=${encodeURIComponent(payload)}; Max-Age=31536000; Path=/gpacalc/; SameSite=Lax; Secure`;
   localStorage.setItem(STORAGE_KEY, payload);
 }
 function showToast(message) {
