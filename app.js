@@ -30,9 +30,18 @@ const termPlan = [
 const gradeOptions = [["", "Not graded"], ["4", "A · 4.0"], ["3", "B · 3.0"], ["2", "C · 2.0"], ["1", "D · 1.0"], ["0", "F · 0.0"], ["x", "Exempt"]];
 const passFailOptions = [["", "Not completed"], ["pass", "Satisfactory"], ["fail", "Unsatisfactory"]];
 const examModules = new Set(["IT43001FP", "GD43001FP", "GD43002FP", "GD43003FP", "GD43004FP"]);
-const VALID_RESULTS = new Set(["0", "1", "2", "3", "4", "x", "pass", "fail"]);
 const TRACK_CODES = ["TRACK1", "TRACK2", "TRACK3"];
+const GRADED_RESULTS = new Set(["0", "1", "2", "3", "4", "x"]);
+const MODULE_CODES = new Set(termPlan.flatMap((term) => term.modules.map((module) => module[1])));
 const STORAGE_KEY = "hf2ig-term-gpa-v2";
+function sanitizeResults(results, pathway) {
+  return Object.fromEntries(Object.entries(results || {}).filter(([code, value]) => {
+    if (!MODULE_CODES.has(code)) return false;
+    return TRACK_CODES.includes(code) && pathway === "lfs"
+      ? ["pass", "fail"].includes(String(value))
+      : GRADED_RESULTS.has(String(value));
+  }));
+}
 function readSavedState() {
   const cookie = document.cookie.split("; ").find((item) => item.startsWith(`${STORAGE_KEY}=`));
   if (cookie) {
@@ -43,9 +52,10 @@ function readSavedState() {
   catch { return {}; }
 }
 const saved = readSavedState();
+const initialPathway = ["ppd", "lfs"].includes(saved.pathway) ? saved.pathway : "ppd";
 const state = {
-  pathway: ["ppd", "lfs"].includes(saved.pathway) ? saved.pathway : "ppd",
-  results: Object.fromEntries(Object.entries(saved.results || {}).filter(([, value]) => VALID_RESULTS.has(String(value)))),
+  pathway: initialPathway,
+  results: sanitizeResults(saved.results, initialPathway),
   trackResults: {
     ppd: Object.fromEntries(Object.entries(saved.trackResults?.ppd || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["0", "1", "2", "3", "4", "x"].includes(String(value)))),
     lfs: Object.fromEntries(Object.entries(saved.trackResults?.lfs || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["pass", "fail"].includes(String(value))))
@@ -319,7 +329,9 @@ document.querySelectorAll('input[name="pathway"]').forEach((radio) => {
 });
 
 document.querySelector("#resetButton").addEventListener("click", () => {
-  state.results = {}; save(); renderModules(); updateScore(); showToast("All results reset");
+  state.results = {};
+  state.trackResults = { ppd: {}, lfs: {} };
+  save(); renderModules(); updateScore(); showToast("All results reset");
 });
 
 targetGpaInput.addEventListener("input", () => {
@@ -357,7 +369,7 @@ document.querySelector("#importBackup").addEventListener("change", async (event)
     const backup = JSON.parse(await file.text());
     if (!['ppd', 'lfs'].includes(backup.pathway) || !backup.results || typeof backup.results !== "object") throw new Error("Invalid backup");
     state.pathway = backup.pathway;
-    state.results = Object.fromEntries(Object.entries(backup.results).filter(([, value]) => VALID_RESULTS.has(String(value))));
+    state.results = sanitizeResults(backup.results, backup.pathway);
     state.trackResults = {
       ppd: Object.fromEntries(Object.entries(backup.trackResults?.ppd || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["0", "1", "2", "3", "4", "x"].includes(String(value)))),
       lfs: Object.fromEntries(Object.entries(backup.trackResults?.lfs || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["pass", "fail"].includes(String(value))))
