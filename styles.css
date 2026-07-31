@@ -424,23 +424,45 @@ h2 {
 .tool-button.secondary { color: var(--navy); background: white; }
 .backup-card small { margin-top: auto; padding-top: 20px; color: var(--muted); font-size: .7rem; }
 
-.formula-card {
+.validation-panel {
   display: grid;
-  grid-template-columns: 1.2fr .7fr 1fr;
-  align-items: center;
-  gap: 55px;
+  grid-template-columns: .85fr 1.15fr;
+  gap: 56px;
   margin: 50px 0 100px;
   padding: 46px 50px;
   color: white;
   background: var(--navy);
   border-radius: 28px;
 }
-.formula-card h2 { font-size: clamp(1.7rem, 3vw, 2.5rem); }
-.formula-card > p { color: #a9becb; }
-.formula { display: flex; align-items: center; justify-content: center; gap: 14px; }
-.formula > span, .formula > strong { color: var(--lime); font: 800 1.3rem "Manrope", sans-serif; }
-.formula div { text-align: center; font-size: .76rem; white-space: nowrap; }
-.formula hr { border: 0; border-top: 1px solid white; }
+.validation-heading h2 { font-size: clamp(1.8rem, 3vw, 2.7rem); }
+.validation-heading > p:last-child { margin-top: 18px; color: #a9becb; }
+.validation-list { display: grid; gap: 11px; }
+.validation-item {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 15px 16px;
+  color: #d8e3e8;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 13px;
+  font-size: .82rem;
+}
+.validation-icon {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  color: var(--navy);
+  background: #bce5f4;
+  border-radius: 50%;
+  font-size: .73rem;
+  font-weight: 900;
+}
+.validation-item.success .validation-icon { background: var(--lime); }
+.validation-item.warning .validation-icon { background: #ffc59f; }
+.validation-item strong { color: white; }
 footer {
   display: flex;
   justify-content: space-between;
@@ -490,7 +512,7 @@ footer {
 @media (max-width: 880px) {
   .hero { grid-template-columns: 1fr; gap: 46px; padding: 65px 7%; }
   .score-card { max-width: 520px; }
-  .formula-card { grid-template-columns: 1fr; gap: 30px; }
+  .validation-panel { grid-template-columns: 1fr; gap: 30px; }
   .pathway-panel { grid-template-columns: 1fr; }
   .tool-grid { grid-template-columns: 1fr; }
   .tool-card { min-height: 0; }
@@ -557,8 +579,7 @@ footer {
   .planning-tools { padding-top: 38px; }
   .tool-card { padding: 23px 20px; border-radius: 18px; }
   .tool-card input, .tool-card select, .tool-button { min-height: 48px; }
-  .formula-card { margin-bottom: 65px; padding: 35px 25px; }
-  .formula { justify-content: flex-start; }
+  .validation-panel { margin-bottom: 65px; padding: 35px 22px; }
   footer { flex-direction: column; gap: 2px; }
 }
 

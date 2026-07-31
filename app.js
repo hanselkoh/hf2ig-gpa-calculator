@@ -30,6 +30,7 @@ const termPlan = [
 const gradeOptions = [["", "Not graded"], ["4", "A · 4.0"], ["3", "B · 3.0"], ["2", "C · 2.0"], ["1", "D · 1.0"], ["0", "F · 0.0"], ["x", "Exempt"]];
 const passFailOptions = [["", "Not completed"], ["pass", "Satisfactory"], ["fail", "Unsatisfactory"]];
 const examModules = new Set(["IT43001FP", "GD43001FP", "GD43002FP", "GD43003FP", "GD43004FP"]);
+const VALID_RESULTS = new Set(["0", "1", "2", "3", "4", "x", "pass", "fail"]);
 const STORAGE_KEY = "hf2ig-term-gpa-v2";
 function readSavedState() {
   const cookie = document.cookie.split("; ").find((item) => item.startsWith(`${STORAGE_KEY}=`));
@@ -41,7 +42,10 @@ function readSavedState() {
   catch { return {}; }
 }
 const saved = readSavedState();
-const state = { pathway: saved.pathway || "ppd", results: saved.results || {} };
+const state = {
+  pathway: ["ppd", "lfs"].includes(saved.pathway) ? saved.pathway : "ppd",
+  results: Object.fromEntries(Object.entries(saved.results || {}).filter(([, value]) => VALID_RESULTS.has(String(value))))
+};
 
 const groupContainer = document.querySelector("#moduleGroups");
 const gpaValue = document.querySelector("#gpaValue");
@@ -58,6 +62,7 @@ const targetResult = document.querySelector("#targetResult");
 const scenarioModule = document.querySelector("#scenarioModule");
 const scenarioGrade = document.querySelector("#scenarioGrade");
 const scenarioResult = document.querySelector("#scenarioResult");
+const validationList = document.querySelector("#validationList");
 
 function displayModule(module) {
   const [rawName, rawCode, credits, type] = module;
@@ -176,6 +181,51 @@ function updateTargetPlanner() {
   }
 }
 
+function updateValidation() {
+  const current = calculate();
+  const modules = gradedModules();
+  const eligibleCredits = modules.reduce((sum, module) => state.results[module.storageCode] === "x" ? sum : sum + module.credits, 0);
+  const remainingCredits = Math.max(0, eligibleCredits - current.credits);
+  const missingModules = modules.filter((module) => state.results[module.storageCode] === undefined).length;
+  const exemptModules = modules.filter((module) => state.results[module.storageCode] === "x").length;
+  const failedModules = modules.filter((module) => state.results[module.storageCode] === "0").length;
+  const unsatisfactory = state.pathway === "lfs" ? ["TRACK1", "TRACK2", "TRACK3"].filter((code) => state.results[code] === "fail").length : 0;
+  const target = Number(targetGpaInput.value);
+  const checks = [];
+
+  if (current.gpa === null) {
+    checks.push(["warning", "!", "No GPA yet", "Enter at least one A–F result before a GPA can be calculated."]);
+  } else {
+    checks.push(["success", "✓", "Calculation is valid", `Your ${current.gpa.toFixed(2)} GPA uses ${current.credits} graded credits.`]);
+  }
+
+  if (Number.isFinite(target) && target >= 0 && target <= 4 && remainingCredits > 0) {
+    const required = ((target * eligibleCredits) - current.points) / remainingCredits;
+    const maximum = eligibleCredits ? (current.points + (4 * remainingCredits)) / eligibleCredits : 0;
+    if (required > 4) {
+      checks.push(["warning", "!", "Target is currently unreachable", `Even A grades in every remaining module would produce a maximum final GPA of ${maximum.toFixed(2)}.`]);
+    } else if (required <= 0) {
+      checks.push(["success", "✓", "Target is secured", "Your completed grade points already protect this target, even if remaining results are low."]);
+    } else {
+      checks.push(["success", "✓", "Target is reachable", `Maintain an average grade point of ${required.toFixed(2)} across ${remainingCredits} remaining credits.`]);
+    }
+  } else if (!Number.isFinite(target) || target < 0 || target > 4) {
+    checks.push(["warning", "!", "Target needs attention", "Use a target GPA between 0.00 and 4.00."]);
+  }
+
+  if (missingModules) checks.push(["info", "i", `${missingModules} results still missing`, "Not graded modules are excluded until a result is entered."]);
+  if (exemptModules) checks.push(["info", "i", `${exemptModules} exempt module${exemptModules === 1 ? "" : "s"}`, "Exempt credits are removed from GPA and target-planner totals."]);
+  if (failedModules) checks.push(["warning", "!", `${failedModules} failed module${failedModules === 1 ? "" : "s"}`, "An F adds zero grade points while its credits remain in the GPA denominator."]);
+  if (unsatisfactory) checks.push(["warning", "!", `${unsatisfactory} unsatisfactory LFS result${unsatisfactory === 1 ? "" : "s"}`, "LFS results do not change GPA, but an Unsatisfactory result may still need to be cleared."]);
+  checks.push(["info", "i", "Highest-impact module", "Industry Attachment carries 8 credits, so its grade affects cumulative GPA more than a regular 3-credit module."]);
+
+  validationList.innerHTML = checks.map(([type, icon, title, explanation]) => `
+    <div class="validation-item ${type}">
+      <span class="validation-icon">${icon}</span>
+      <span><strong>${title}</strong><br>${explanation}</span>
+    </div>`).join("");
+}
+
 function populateScenarioModules() {
   const previous = scenarioModule.value;
   scenarioModule.innerHTML = gradedModules().map((module) => `<option value="${module.storageCode}">${module.name}</option>`).join("");
@@ -236,6 +286,7 @@ function updateScore() {
   updateTermSummaries();
   updateTargetPlanner();
   updateScenario();
+  updateValidation();
 }
 
 function save() {
@@ -275,7 +326,7 @@ document.querySelector("#copyButton").addEventListener("click", async () => {
   catch { showToast("Could not access clipboard"); }
 });
 
-targetGpaInput.addEventListener("input", updateTargetPlanner);
+targetGpaInput.addEventListener("input", () => { updateTargetPlanner(); updateValidation(); });
 scenarioModule.addEventListener("change", updateScenario);
 scenarioGrade.addEventListener("change", updateScenario);
 
@@ -304,9 +355,8 @@ document.querySelector("#importBackup").addEventListener("change", async (event)
   try {
     const backup = JSON.parse(await file.text());
     if (!['ppd', 'lfs'].includes(backup.pathway) || !backup.results || typeof backup.results !== "object") throw new Error("Invalid backup");
-    const allowedResults = new Set(["0", "1", "2", "3", "4", "x", "pass", "fail"]);
     state.pathway = backup.pathway;
-    state.results = Object.fromEntries(Object.entries(backup.results).filter(([, value]) => allowedResults.has(String(value))));
+    state.results = Object.fromEntries(Object.entries(backup.results).filter(([, value]) => VALID_RESULTS.has(String(value))));
     document.querySelectorAll('input[name="pathway"]').forEach((radio) => { radio.checked = radio.value === state.pathway; });
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
     save(); renderModules(searchInput.value); populateScenarioModules(); updateScore(); showToast("Backup restored");

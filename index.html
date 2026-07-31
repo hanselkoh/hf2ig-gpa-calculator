@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=10">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -140,17 +140,13 @@
       </div>
     </section>
 
-    <section class="formula-card">
-      <div>
-        <p class="eyebrow">How GPA works</p>
-        <h2>Weighted by credits, not module count.</h2>
+    <section class="validation-panel" aria-labelledby="validationTitle">
+      <div class="validation-heading">
+        <p class="eyebrow">Validation &amp; explanations</p>
+        <h2 id="validationTitle">Understand what the numbers mean.</h2>
+        <p>These checks update automatically as you enter results or change your target.</p>
       </div>
-      <div class="formula">
-        <span>GPA</span>
-        <strong>=</strong>
-        <div><span>Σ (grade point × credits)</span><hr><span>Σ graded credits</span></div>
-      </div>
-      <p>Satisfactory/Unsatisfactory LFS modules and modules marked “Not graded” are excluded from GPA. Regular modules use 3 credits, PPD uses 2, and Industry Attachment uses 8.</p>
+      <div class="validation-list" id="validationList" aria-live="polite"></div>
     </section>
   </main>
 
@@ -160,6 +156,6 @@
   </footer>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
