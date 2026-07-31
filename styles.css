@@ -180,6 +180,44 @@ h1 span { color: var(--teal-dark); }
 }
 
 .calculator { padding: 100px 0 55px; }
+.pathway-panel {
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  align-items: center;
+  gap: 46px;
+  margin-bottom: 76px;
+  padding: 38px 42px;
+  background: white;
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+.pathway-panel h2 { font-size: clamp(1.8rem, 3vw, 2.7rem); }
+.pathway-panel p:last-child { margin-bottom: 0; color: var(--muted); }
+.pathway-toggle { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pathway-toggle label { position: relative; cursor: pointer; }
+.pathway-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.pathway-toggle span {
+  min-height: 102px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+  transition: .2s ease;
+}
+.pathway-toggle small { color: var(--muted); }
+.pathway-toggle input:checked + span {
+  color: white;
+  border-color: var(--navy);
+  background: var(--navy);
+  box-shadow: 0 12px 28px rgba(11,38,57,.2);
+}
+.pathway-toggle input:checked + span small { color: var(--lime); }
+.pathway-toggle input:focus-visible + span { outline: 3px solid rgba(23,184,154,.3); }
 .section-heading {
   display: flex;
   align-items: end;
@@ -238,6 +276,12 @@ h2 {
   font-size: .72rem;
   font-weight: 800;
 }
+.term-group .group-code { min-width: 86px; text-align: center; }
+.term-green .group-code { color: #194b31; background: #c7efad; }
+.term-violet .group-code { color: #66345f; background: #edc7e9; }
+.term-blue .group-code { color: #12516a; background: #bce5f4; }
+.term-peach .group-code { color: #7a4937; background: #f7d7c5; }
+.term-yellow .group-code { color: #655300; background: #f5e66e; }
 .group-title { font: 800 1.16rem "Manrope", sans-serif; }
 .group-credits { margin-left: auto; color: var(--muted); font-size: .8rem; }
 .module-list {
@@ -270,6 +314,8 @@ h2 {
   font-weight: 800;
 }
 .module-name { padding-right: 20px; font-weight: 700; line-height: 1.25; }
+.module-name small { display: block; margin-top: 5px; }
+.pf-badge { color: var(--teal-dark); font-size: .67rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
 .module-code, .module-credit { color: var(--muted); font-size: .78rem; }
 .module-credit b { color: var(--ink); font-size: .95rem; }
 .grade-select {
@@ -283,6 +329,7 @@ h2 {
   outline: none;
 }
 .grade-select:focus { border-color: var(--teal-dark); }
+.grade-select.pass-fail { color: var(--teal-dark); background: #ecfaf6; border-color: #bce8dc; }
 .empty-state { padding: 60px; text-align: center; color: var(--muted); }
 
 .formula-card {
@@ -339,6 +386,7 @@ footer {
   .hero { grid-template-columns: 1fr; gap: 46px; padding: 65px 7%; }
   .score-card { max-width: 520px; }
   .formula-card { grid-template-columns: 1fr; gap: 30px; }
+  .pathway-panel { grid-template-columns: 1fr; }
   .module-row { grid-template-columns: 40px 1fr 120px; padding: 14px; }
   .module-code { grid-column: 2; }
   .module-credit { display: none; }
@@ -354,6 +402,9 @@ footer {
   .score-card { padding: 26px 22px; }
   .score-detail { flex-direction: column; gap: 4px; }
   .calculator { padding-top: 70px; }
+  .pathway-panel { padding: 28px 20px; margin-bottom: 60px; }
+  .pathway-toggle { grid-template-columns: 1fr; }
+  .pathway-toggle span { min-height: 80px; }
   .section-heading { align-items: stretch; flex-direction: column; }
   .toolbar { align-items: stretch; flex-direction: column; }
   .search-box input { width: 100%; }
