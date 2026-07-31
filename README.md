@@ -6,7 +6,9 @@ A term-by-term, credit-weighted GPA calculator for the Higher Nitec in Immersive
 
 - Modules grouped from Term 1 through Term 8
 - O/N Level or DPP pathway with graded PPD modules
-- Progression pathway with Pass/Fail LFS modules excluded from GPA
+- Progression pathway with Satisfactory/Unsatisfactory LFS modules excluded from GPA
+- Current and cumulative GPA shown after every term
+- Clean module names without internal module-code tags
 - Sports & Wellness excluded
 - Instant credit-weighted GPA calculation
 - Searchable module list

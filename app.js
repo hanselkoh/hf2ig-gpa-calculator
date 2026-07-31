@@ -28,7 +28,7 @@ const termPlan = [
 ];
 
 const gradeOptions = [["", "Not graded"], ["4", "A · 4.0"], ["3", "B · 3.0"], ["2", "C · 2.0"], ["1", "D · 1.0"], ["0", "F · 0.0"], ["x", "Exempt"]];
-const passFailOptions = [["", "Not completed"], ["pass", "Pass"], ["fail", "Fail"]];
+const passFailOptions = [["", "Not completed"], ["pass", "Satisfactory"], ["fail", "Unsatisfactory"]];
 const STORAGE_KEY = "hf2ig-term-gpa-v2";
 const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
 const state = { pathway: saved.pathway || "ppd", results: saved.results || {} };
@@ -61,7 +61,7 @@ function renderModules(filter = "") {
   const query = filter.trim().toLowerCase();
   let visibleCount = 0;
 
-  termPlan.forEach((term) => {
+  termPlan.forEach((term, termIndex) => {
     const matches = term.modules.map(displayModule).filter((module) => `${module.name} ${module.code}`.toLowerCase().includes(query));
     if (!matches.length) return;
     visibleCount += matches.length;
@@ -85,17 +85,24 @@ function renderModules(filter = "") {
       row.className = "module-row";
       row.innerHTML = `
         <span class="module-number">${index + 1}</span>
-        <span class="module-name">${module.name}${module.passFail ? '<small class="pf-badge">Pass / Fail · Not in GPA</small>' : ""}</span>
-        <span class="module-code">${module.code}</span>
+        <span class="module-name">${module.name}${module.passFail ? '<small class="pf-badge">Satisfactory / Unsatisfactory · Not in GPA</small>' : ""}</span>
         <span class="module-credit"><b>${module.credits}</b> credit${module.credits === 1 ? "" : "s"}</span>
         <select class="grade-select ${module.passFail ? "pass-fail" : ""}" data-code="${module.storageCode}" aria-label="Result for ${module.name}">${options}</select>`;
       list.appendChild(row);
     });
+    const summary = document.createElement("div");
+    summary.className = "term-summary";
+    summary.dataset.termIndex = termIndex;
+    summary.innerHTML = `
+      <span><small>Current GPA</small><b class="term-gpa">—</b></span>
+      <span><small>Cumulative GPA</small><b class="cumulative-gpa">—</b></span>`;
+    list.appendChild(summary);
     groupContainer.appendChild(section);
   });
 
   emptyState.hidden = visibleCount > 0;
   bindSelects();
+  updateTermSummaries();
 }
 
 function bindSelects() {
@@ -122,6 +129,29 @@ function calculate() {
   return { gpa: credits ? points / credits : null, credits, gradedModules };
 }
 
+function updateTermSummaries() {
+  let cumulativePoints = 0;
+  let cumulativeCredits = 0;
+  termPlan.forEach((term, termIndex) => {
+    let termPoints = 0;
+    let termCredits = 0;
+    term.modules.map(displayModule).forEach((module) => {
+      if (module.passFail) return;
+      const result = state.results[module.storageCode];
+      if (result !== undefined && result !== "" && result !== "x") {
+        termPoints += Number(result) * module.credits;
+        termCredits += module.credits;
+      }
+    });
+    cumulativePoints += termPoints;
+    cumulativeCredits += termCredits;
+    const summary = document.querySelector(`.term-summary[data-term-index="${termIndex}"]`);
+    if (!summary) return;
+    summary.querySelector(".term-gpa").textContent = termCredits ? (termPoints / termCredits).toFixed(2) : "—";
+    summary.querySelector(".cumulative-gpa").textContent = cumulativeCredits ? (cumulativePoints / cumulativeCredits).toFixed(2) : "—";
+  });
+}
+
 function updateScore() {
   const result = calculate();
   const totalGraded = state.pathway === "ppd" ? 21 : 18;
@@ -134,6 +164,7 @@ function updateScore() {
   else if (result.gpa >= 3) scoreMessage.textContent = "Strong progress toward your goal.";
   else if (result.gpa >= 2) scoreMessage.textContent = "You’re building a steady foundation.";
   else scoreMessage.textContent = "Every graded module is a chance to lift your GPA.";
+  updateTermSummaries();
 }
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
@@ -147,7 +178,7 @@ document.querySelectorAll('input[name="pathway"]').forEach((radio) => {
   radio.addEventListener("change", (event) => {
     state.pathway = event.target.value;
     ["TRACK1", "TRACK2", "TRACK3"].forEach((code) => delete state.results[code]);
-    pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Pass/Fail and do not affect your GPA.";
+    pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
     save(); renderModules(searchInput.value); updateScore(); showToast("Pathway updated");
   });
 });
@@ -164,5 +195,5 @@ document.querySelector("#copyButton").addEventListener("click", async () => {
   catch { showToast("Could not access clipboard"); }
 });
 
-pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Pass/Fail and do not affect your GPA.";
+pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
 renderModules(); updateScore();

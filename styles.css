@@ -293,7 +293,7 @@ h2 {
 }
 .module-row {
   display: grid;
-  grid-template-columns: 48px minmax(230px, 1fr) 130px 75px 155px;
+  grid-template-columns: 48px minmax(230px, 1fr) 75px 155px;
   align-items: center;
   min-height: 76px;
   padding: 9px 20px;
@@ -330,6 +330,17 @@ h2 {
 }
 .grade-select:focus { border-color: var(--teal-dark); }
 .grade-select.pass-fail { color: var(--teal-dark); background: #ecfaf6; border-color: #bce8dc; }
+.term-summary {
+  display: flex;
+  justify-content: flex-end;
+  gap: 46px;
+  padding: 19px 24px;
+  color: white;
+  background: var(--navy);
+}
+.term-summary span { min-width: 125px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.term-summary small { color: #a9becb; font-size: .72rem; font-weight: 700; }
+.term-summary b { color: var(--lime); font: 800 1.2rem "Manrope", sans-serif; }
 .empty-state { padding: 60px; text-align: center; color: var(--muted); }
 
 .formula-card {
@@ -388,9 +399,8 @@ footer {
   .formula-card { grid-template-columns: 1fr; gap: 30px; }
   .pathway-panel { grid-template-columns: 1fr; }
   .module-row { grid-template-columns: 40px 1fr 120px; padding: 14px; }
-  .module-code { grid-column: 2; }
   .module-credit { display: none; }
-  .grade-select { grid-column: 3; grid-row: 1 / span 2; }
+  .grade-select { grid-column: 3; grid-row: 1; }
 }
 @media (max-width: 620px) {
   .site-header, main, footer { width: min(100% - 24px, 1180px); }
@@ -416,6 +426,8 @@ footer {
   .module-name { padding-right: 8px; font-size: .86rem; }
   .module-code { font-size: .7rem; }
   .grade-select { padding: 8px; font-size: .78rem; }
+  .term-summary { justify-content: space-between; gap: 14px; padding: 17px 14px; }
+  .term-summary span { min-width: 0; flex: 1; flex-direction: column; align-items: flex-start; gap: 2px; }
   .group-credits { display: none; }
   .formula-card { margin-bottom: 65px; padding: 35px 25px; }
   footer { flex-direction: column; gap: 2px; }
