@@ -31,6 +31,7 @@ const gradeOptions = [["", "Not graded"], ["4", "A · 4.0"], ["3", "B · 3.0"], 
 const passFailOptions = [["", "Not completed"], ["pass", "Satisfactory"], ["fail", "Unsatisfactory"]];
 const examModules = new Set(["IT43001FP", "GD43001FP", "GD43002FP", "GD43003FP", "GD43004FP"]);
 const VALID_RESULTS = new Set(["0", "1", "2", "3", "4", "x", "pass", "fail"]);
+const TRACK_CODES = ["TRACK1", "TRACK2", "TRACK3"];
 const STORAGE_KEY = "hf2ig-term-gpa-v2";
 function readSavedState() {
   const cookie = document.cookie.split("; ").find((item) => item.startsWith(`${STORAGE_KEY}=`));
@@ -44,8 +45,18 @@ function readSavedState() {
 const saved = readSavedState();
 const state = {
   pathway: ["ppd", "lfs"].includes(saved.pathway) ? saved.pathway : "ppd",
-  results: Object.fromEntries(Object.entries(saved.results || {}).filter(([, value]) => VALID_RESULTS.has(String(value))))
+  results: Object.fromEntries(Object.entries(saved.results || {}).filter(([, value]) => VALID_RESULTS.has(String(value)))),
+  trackResults: {
+    ppd: Object.fromEntries(Object.entries(saved.trackResults?.ppd || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["0", "1", "2", "3", "4", "x"].includes(String(value)))),
+    lfs: Object.fromEntries(Object.entries(saved.trackResults?.lfs || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["pass", "fail"].includes(String(value))))
+  },
+  targetGpa: Number.isFinite(Number(saved.targetGpa)) && Number(saved.targetGpa) >= 0 && Number(saved.targetGpa) <= 4 ? String(saved.targetGpa) : "2.50"
 };
+TRACK_CODES.forEach((code) => {
+  if (state.results[code] !== undefined) state.trackResults[state.pathway][code] = state.results[code];
+  delete state.results[code];
+});
+Object.assign(state.results, state.trackResults[state.pathway]);
 
 const groupContainer = document.querySelector("#moduleGroups");
 const gpaValue = document.querySelector("#gpaValue");
@@ -59,6 +70,18 @@ const pathwayDescription = document.querySelector("#pathwayDescription");
 const targetGpaInput = document.querySelector("#targetGpa");
 const targetResult = document.querySelector("#targetResult");
 const validationList = document.querySelector("#validationList");
+targetGpaInput.value = state.targetGpa;
+
+function storeCurrentTrackResults() {
+  state.trackResults[state.pathway] = Object.fromEntries(TRACK_CODES
+    .filter((code) => state.results[code] !== undefined)
+    .map((code) => [code, state.results[code]]));
+}
+
+function loadTrackResults(pathway) {
+  TRACK_CODES.forEach((code) => delete state.results[code]);
+  Object.assign(state.results, state.trackResults[pathway]);
+}
 
 function displayModule(module) {
   const [rawName, rawCode, credits, type] = module;
@@ -137,10 +160,11 @@ function calculate() {
   termPlan.forEach((term) => term.modules.map(displayModule).forEach((module) => {
     if (module.passFail) return;
     const result = state.results[module.storageCode];
-    if (result !== undefined && result !== "" && result !== "x") {
+    if (result !== undefined && result !== "") {
+      gradedModules += 1;
+      if (result === "x") return;
       points += Number(result) * module.credits;
       credits += module.credits;
-      gradedModules += 1;
     }
   }));
   return { gpa: credits ? points / credits : null, points, credits, gradedModules };
@@ -266,9 +290,12 @@ function updateScore() {
 }
 
 function save() {
+  storeCurrentTrackResults();
   const payload = JSON.stringify({
     pathway: state.pathway,
     results: state.results,
+    trackResults: state.trackResults,
+    targetGpa: state.targetGpa,
     calculation: calculate(),
     savedAt: new Date().toISOString()
   });
@@ -283,8 +310,9 @@ function showToast(message) {
 document.querySelectorAll('input[name="pathway"]').forEach((radio) => {
   radio.checked = radio.value === state.pathway;
   radio.addEventListener("change", (event) => {
+    storeCurrentTrackResults();
     state.pathway = event.target.value;
-    ["TRACK1", "TRACK2", "TRACK3"].forEach((code) => delete state.results[code]);
+    loadTrackResults(state.pathway);
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
     save(); renderModules(); updateScore(); showToast("Pathway updated");
   });
@@ -294,7 +322,12 @@ document.querySelector("#resetButton").addEventListener("click", () => {
   state.results = {}; save(); renderModules(); updateScore(); showToast("All results reset");
 });
 
-targetGpaInput.addEventListener("input", () => { updateTargetPlanner(); updateValidation(); });
+targetGpaInput.addEventListener("input", () => {
+  state.targetGpa = targetGpaInput.value;
+  save();
+  updateTargetPlanner();
+  updateValidation();
+});
 
 document.querySelector("#exportBackup").addEventListener("click", () => {
   const backup = {
@@ -302,6 +335,8 @@ document.querySelector("#exportBackup").addEventListener("click", () => {
     version: 3,
     pathway: state.pathway,
     results: state.results,
+    trackResults: state.trackResults,
+    targetGpa: state.targetGpa,
     calculation: calculate(),
     exportedAt: new Date().toISOString()
   };
@@ -323,6 +358,16 @@ document.querySelector("#importBackup").addEventListener("change", async (event)
     if (!['ppd', 'lfs'].includes(backup.pathway) || !backup.results || typeof backup.results !== "object") throw new Error("Invalid backup");
     state.pathway = backup.pathway;
     state.results = Object.fromEntries(Object.entries(backup.results).filter(([, value]) => VALID_RESULTS.has(String(value))));
+    state.trackResults = {
+      ppd: Object.fromEntries(Object.entries(backup.trackResults?.ppd || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["0", "1", "2", "3", "4", "x"].includes(String(value)))),
+      lfs: Object.fromEntries(Object.entries(backup.trackResults?.lfs || {}).filter(([code, value]) => TRACK_CODES.includes(code) && ["pass", "fail"].includes(String(value))))
+    };
+    TRACK_CODES.forEach((code) => {
+      if (state.results[code] !== undefined) state.trackResults[state.pathway][code] = state.results[code];
+    });
+    loadTrackResults(state.pathway);
+    state.targetGpa = Number.isFinite(Number(backup.targetGpa)) && Number(backup.targetGpa) >= 0 && Number(backup.targetGpa) <= 4 ? String(backup.targetGpa) : "2.50";
+    targetGpaInput.value = state.targetGpa;
     document.querySelectorAll('input[name="pathway"]').forEach((radio) => { radio.checked = radio.value === state.pathway; });
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
     save(); renderModules(); updateScore(); showToast("Backup restored");

@@ -18,7 +18,7 @@ A term-by-term, credit-weighted GPA calculator for the Higher Nitec in Immersive
 - Sports & Wellness excluded
 - Instant credit-weighted GPA calculation
 - Support for ungraded and exempt modules
-- Pathway, results, and latest calculations saved in a first-party browser cookie
+- Pathway-specific results, target GPA, and latest calculations saved in a first-party browser cookie
 - Browser storage fallback for environments where cookies are restricted
 - Mobile-friendly layout
 
