@@ -13,7 +13,8 @@ A term-by-term, credit-weighted GPA calculator for the Higher Nitec in Immersive
 - Instant credit-weighted GPA calculation
 - Searchable module list
 - Support for ungraded and exempt modules
-- Grades saved locally in the browser
+- Pathway, results, and latest calculations saved in a first-party browser cookie
+- Browser storage fallback for environments where cookies are restricted
 - Mobile-friendly layout
 
 ## Grade scale

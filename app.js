@@ -23,14 +23,23 @@ const termPlan = [
   ]},
   { term: "Term 8", colour: "green", modules: [
     ["Built Environment Visualisation", "GD53001FP", 3], ["Humanoid Programming", "GD53004FP", 3],
-    ["Digitalisation & Disruptive Technologies", "DDT", 3], ["{TRACK} 3", "TRACK3", 2, "track"]
+    ["Design Thinking", "DDT", 3], ["{TRACK} 3", "TRACK3", 2, "track"]
   ]}
 ];
 
 const gradeOptions = [["", "Not graded"], ["4", "A · 4.0"], ["3", "B · 3.0"], ["2", "C · 2.0"], ["1", "D · 1.0"], ["0", "F · 0.0"], ["x", "Exempt"]];
 const passFailOptions = [["", "Not completed"], ["pass", "Satisfactory"], ["fail", "Unsatisfactory"]];
 const STORAGE_KEY = "hf2ig-term-gpa-v2";
-const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+function readSavedState() {
+  const cookie = document.cookie.split("; ").find((item) => item.startsWith(`${STORAGE_KEY}=`));
+  if (cookie) {
+    try { return JSON.parse(decodeURIComponent(cookie.slice(STORAGE_KEY.length + 1))); }
+    catch { /* Fall through to browser storage. */ }
+  }
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch { return {}; }
+}
+const saved = readSavedState();
 const state = { pathway: saved.pathway || "ppd", results: saved.results || {} };
 
 const groupContainer = document.querySelector("#moduleGroups");
@@ -167,7 +176,16 @@ function updateScore() {
   updateTermSummaries();
 }
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function save() {
+  const payload = JSON.stringify({
+    pathway: state.pathway,
+    results: state.results,
+    calculation: calculate(),
+    savedAt: new Date().toISOString()
+  });
+  document.cookie = `${STORAGE_KEY}=${encodeURIComponent(payload)}; Max-Age=31536000; Path=/hf2ig-gpa-calculator/; SameSite=Lax; Secure`;
+  localStorage.setItem(STORAGE_KEY, payload);
+}
 function showToast(message) {
   toast.textContent = message; toast.classList.add("show"); clearTimeout(showToast.timeout);
   showToast.timeout = setTimeout(() => toast.classList.remove("show"), 2200);
