@@ -59,9 +59,6 @@ const toast = document.querySelector("#toast");
 const pathwayDescription = document.querySelector("#pathwayDescription");
 const targetGpaInput = document.querySelector("#targetGpa");
 const targetResult = document.querySelector("#targetResult");
-const scenarioModule = document.querySelector("#scenarioModule");
-const scenarioGrade = document.querySelector("#scenarioGrade");
-const scenarioResult = document.querySelector("#scenarioResult");
 const validationList = document.querySelector("#validationList");
 
 function displayModule(module) {
@@ -197,7 +194,6 @@ function updateValidation() {
     checks.push(["warning", "!", "No GPA yet", "Enter at least one A–F result before a GPA can be calculated."]);
     checks.push(["info", "i", "Poly eligibility pending", "A cumulative GPA of 2.50 is used as the Poly eligibility threshold in this calculator."]);
   } else {
-    checks.push(["success", "✓", "Calculation is valid", `Your ${current.gpa.toFixed(2)} GPA uses ${current.credits} graded credits.`]);
     if (current.gpa >= 2.5) {
       checks.push(["success", "✓", "Poly GPA threshold met", `Your ${current.gpa.toFixed(2)} GPA meets the 2.50 threshold. Other admission requirements may still apply.`]);
     } else {
@@ -223,35 +219,11 @@ function updateValidation() {
   if (exemptModules) checks.push(["info", "i", `${exemptModules} exempt module${exemptModules === 1 ? "" : "s"}`, "Exempt credits are removed from GPA and target-planner totals."]);
   if (failedModules) checks.push(["warning", "!", `${failedModules} failed module${failedModules === 1 ? "" : "s"}`, "An F adds zero grade points while its credits remain in the GPA denominator."]);
   if (unsatisfactory) checks.push(["warning", "!", `${unsatisfactory} unsatisfactory LFS result${unsatisfactory === 1 ? "" : "s"}`, "LFS results do not change GPA, but an Unsatisfactory result may still need to be cleared."]);
-  checks.push(["info", "i", "Highest-impact module", "Industry Attachment carries 8 credits, so its grade affects cumulative GPA more than a regular 3-credit module."]);
-
   validationList.innerHTML = checks.map(([type, icon, title, explanation]) => `
     <div class="validation-item ${type}">
       <span class="validation-icon">${icon}</span>
       <span><strong>${title}</strong><br>${explanation}</span>
     </div>`).join("");
-}
-
-function populateScenarioModules() {
-  const previous = scenarioModule.value;
-  scenarioModule.innerHTML = gradedModules().map((module) => `<option value="${module.storageCode}">${module.name}</option>`).join("");
-  if ([...scenarioModule.options].some((option) => option.value === previous)) scenarioModule.value = previous;
-  updateScenario();
-}
-
-function updateScenario() {
-  const module = gradedModules().find((item) => item.storageCode === scenarioModule.value);
-  if (!module) { scenarioResult.textContent = "Select a module and grade."; return; }
-  const possibleGrade = Number(scenarioGrade.value);
-  const current = calculate();
-  const currentValue = state.results[module.storageCode];
-  const hasCurrentGrade = currentValue !== undefined && currentValue !== "" && currentValue !== "x";
-  const projectedPoints = current.points - (hasCurrentGrade ? Number(currentValue) * module.credits : 0) + possibleGrade * module.credits;
-  const projectedCredits = current.credits + (hasCurrentGrade ? 0 : module.credits);
-  const projectedGpa = projectedCredits ? projectedPoints / projectedCredits : null;
-  const delta = current.gpa === null || projectedGpa === null ? null : projectedGpa - current.gpa;
-  const deltaText = delta === null ? "first projected result" : `${delta >= 0 ? "+" : ""}${delta.toFixed(2)} change`;
-  scenarioResult.innerHTML = `Projected cumulative GPA: <strong>${projectedGpa === null ? "—" : projectedGpa.toFixed(2)}</strong><br>${deltaText}`;
 }
 
 function updateTermSummaries() {
@@ -291,7 +263,6 @@ function updateScore() {
   else scoreMessage.textContent = "Every graded module is a chance to lift your GPA.";
   updateTermSummaries();
   updateTargetPlanner();
-  updateScenario();
   updateValidation();
 }
 
@@ -316,7 +287,7 @@ document.querySelectorAll('input[name="pathway"]').forEach((radio) => {
     state.pathway = event.target.value;
     ["TRACK1", "TRACK2", "TRACK3"].forEach((code) => delete state.results[code]);
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
-    save(); renderModules(searchInput.value); populateScenarioModules(); updateScore(); showToast("Pathway updated");
+    save(); renderModules(searchInput.value); updateScore(); showToast("Pathway updated");
   });
 });
 
@@ -333,8 +304,6 @@ document.querySelector("#copyButton").addEventListener("click", async () => {
 });
 
 targetGpaInput.addEventListener("input", () => { updateTargetPlanner(); updateValidation(); });
-scenarioModule.addEventListener("change", updateScenario);
-scenarioGrade.addEventListener("change", updateScenario);
 
 document.querySelector("#exportBackup").addEventListener("click", () => {
   const backup = {
@@ -365,7 +334,7 @@ document.querySelector("#importBackup").addEventListener("change", async (event)
     state.results = Object.fromEntries(Object.entries(backup.results).filter(([, value]) => VALID_RESULTS.has(String(value))));
     document.querySelectorAll('input[name="pathway"]').forEach((radio) => { radio.checked = radio.value === state.pathway; });
     pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
-    save(); renderModules(searchInput.value); populateScenarioModules(); updateScore(); showToast("Backup restored");
+    save(); renderModules(searchInput.value); updateScore(); showToast("Backup restored");
   } catch {
     showToast("That backup file could not be restored");
   } finally {
@@ -374,4 +343,4 @@ document.querySelector("#importBackup").addEventListener("change", async (event)
 });
 
 pathwayDescription.textContent = state.pathway === "ppd" ? "PPD modules are graded and count toward your GPA." : "LFS modules use Satisfactory/Unsatisfactory and do not affect your GPA.";
-renderModules(); populateScenarioModules(); updateScore();
+renderModules(); updateScore();
