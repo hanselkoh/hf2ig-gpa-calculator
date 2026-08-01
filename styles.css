@@ -472,6 +472,17 @@ footer {
   color: var(--muted);
   font-size: .78rem;
 }
+.visitor-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.visitor-counter img {
+  display: block;
+  height: 20px;
+  width: auto;
+}
 .toast {
   position: fixed;
   left: 50%;
@@ -580,7 +591,7 @@ footer {
   .tool-card { padding: 23px 20px; border-radius: 18px; }
   .tool-card input, .tool-card select, .tool-button { min-height: 48px; }
   .validation-panel { margin-bottom: 65px; padding: 35px 22px; }
-  footer { flex-direction: column; gap: 2px; }
+  footer { flex-direction: column; align-items: flex-start; gap: 5px; }
 }
 
 @media (max-width: 380px) {
